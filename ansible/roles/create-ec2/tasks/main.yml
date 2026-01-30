@@ -1,0 +1,34 @@
+---
+- name: Jenkins Security Group
+  amazon.aws.ec2_security_group:
+    name: jenkins-sg
+    description: allowing ssh and jenkins ui access
+    vpc_id: vpc-0bab8141a92cfaa9c
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    rules:
+      - proto: tcp
+        ports:
+          - 22
+          - 8080
+        cidr_ip: 0.0.0.0/0
+
+- name: Jenkins EC2 with EBS
+  amazon.aws.ec2_instance:
+    name: "jenkins-server"
+    vpc_subnet_id: subnet-0d3348e011d905719
+    instance_type: c7i-flex.large
+    key_name: "DevSecOps-Project-Key"
+    security_group: jenkins-sg 
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: ami-019715e0d74f695be
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 24
+          delete_on_termination: true
