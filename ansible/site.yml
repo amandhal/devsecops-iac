@@ -1,7 +1,13 @@
 ---
-- name: Deploy Jenkins Server
+- name: Deploy EC2 for Jenkins Server
   hosts: localhost
   connection: local
   gather_facts: no
   roles:
     - create-ec2
+
+- name: Configure Jenkins on EC2
+  hosts: all 
+  become: yes
+  roles:
+    - configure-ec2
