@@ -4,7 +4,7 @@
   connection: local
   gather_facts: no
   roles:
-    - create-ec2
+    - create-ec2-instances
 
 - name: Pausing for few seconds
   hosts: localhost
@@ -21,8 +21,15 @@
     - name: Refresh inventory to ensure new instances exist in inventory
       ansible.builtin.meta: refresh_inventory
 
-- name: Configure Jenkins on EC2
-  hosts: all 
+- name: Configure Jenkins Controller on EC2
+  hosts: jenkins_controller 
   become: yes
   roles:
-    - configure-ec2
+    - configure-ec2-jenkins-controller
+
+- name: Configure Jenkins Agent on EC2
+  hosts: jenkins_agent 
+  become: yes
+  roles:
+    - configure-ec2-jenkins-agent
+

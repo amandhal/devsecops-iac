@@ -1,0 +1,32 @@
+---
+- name: Set hostname to jenkins-agent
+  hostname:
+    name: jenkins-agent
+
+- name: Set linux system timezone to Asia/Kolkata
+  timezone:
+    name: Asia/Kolkata
+
+- name: Install JDK
+  apt:
+    name: openjdk-25-jdk
+    state: present
+    update_cache: yes
+
+- name: Create jenkins user for jenkins agent ec2
+  become: yes
+  ansible.builtin.user:
+    name: jenkins
+    shell: /bin/bash
+    createhome: yes
+    state: present
+
+- name: Add public key to jenkins agent at jenkins user
+  ansible.builtin.lineinfile:
+    path: /home/jenkins/.ssh/authorized_keys
+    create: yes
+    line: "{{ hostvars['localhost']['jenkins_agent_ssh_public_key'] }}"
+    owner: jenkins
+    group: jenkins
+    mode: '0600'
+  become: yes

@@ -49,3 +49,32 @@
     daemon_reload: yes
     state: started
     enabled: yes
+
+- name: Ensure Jenkins SSH dir
+  ansible.builtin.file:
+    path: /var/lib/jenkins/.ssh
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0700'
+  become: yes
+
+- name: Generate ed25519 key on controller
+  community.crypto.openssh_keypair:
+    path: /var/lib/jenkins/.ssh/jenkins-agent-key
+    type: ed25519
+    comment: jenkins-agent-access
+    state: present
+    force: no
+    owner: jenkins
+    group: jenkins
+    mode: '0600'
+  become: yes
+  register: jenkins_agent_ssh
+
+- name: Set fact for agent access (global)
+  ansible.builtin.set_fact:
+    jenkins_agent_ssh_public_key: "{{ jenkins_agent_ssh.public_key }}"
+  delegate_to: localhost
+  delegate_facts: true
+  run_once: true
