@@ -33,3 +33,8 @@
   roles:
     - configure-ec2-jenkins-agent
 
+- name: Configure SonarQube on EC2
+  hosts: sonarqube
+  become: yes
+  roles:
+    - configure-ec2-sonarqube
