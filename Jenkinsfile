@@ -27,19 +27,19 @@ pipeline {
         }
         stage('ECR Login') {
             steps {
-                sh 'aws ecr get-login-password --region ap-south-1 | /
+                sh 'aws ecr get-login-password --region ap-south-1 | \
                 docker login --username AWS --password-stdin ECR_REGISTRY'
             }
         }
         stage('Build Image') {
             steps {
-                sh 'export DOCKER_BUILDKIT=0 && docker build --platform linux/amd64 /
+                sh 'export DOCKER_BUILDKIT=0 && docker build --platform linux/amd64 \
                 -t "$IMAGE_REPO:$BUILD_NUMBER" -t "$IMAGE_REPO:latest" .'
             }
         }
         stage('Trivy Image Scan') {
             steps {
-                sh 'trivy image --exit-code 1 /
+                sh 'trivy image --exit-code 1 \
                 --severity HIGH,CRITICAL "$IMAGE_REPO:$BUILD_NUMBER"'
             }
         }
