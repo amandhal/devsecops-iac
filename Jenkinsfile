@@ -28,7 +28,7 @@ pipeline {
         stage('ECR Login') {
             steps {
                 sh 'aws ecr get-login-password --region ap-south-1 | \
-                docker login --username AWS --password-stdin ECR_REGISTRY'
+                docker login --username AWS --password-stdin $ECR_REGISTRY'
             }
         }
         stage('Build Image') {
