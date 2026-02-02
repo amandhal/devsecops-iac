@@ -3,6 +3,10 @@ pipeline {
     tools {
         maven 'maven3'
     }
+    environment {
+        ECR_REGISTRY = '185137893823.dkr.ecr.ap-south-1.amazonaws.com'
+        IMAGE_REPO = "${ECR_REGISTRY}/devsecops-project-ecr"
+    }
     stages {
         stage('Trivy FS Scan') {
             steps {
@@ -19,6 +23,30 @@ pipeline {
                     -Dsonar.token="${SONAR_TOKEN}" \
                     -Dsonar.qualitygate.wait=true'
                 }
+            }
+        }
+        stage('ECR Login') {
+            steps {
+                sh 'aws ecr get-login-password --region ap-south-1 | /
+                docker login --username AWS --password-stdin ECR_REGISTRY'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh 'export DOCKER_BUILDKIT=0 && docker build --platform linux/amd64 /
+                -t "$IMAGE_REPO:$BUILD_NUMBER" -t "$IMAGE_REPO:latest" .'
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image --exit-code 1 /
+                --severity HIGH,CRITICAL "$IMAGE_REPO:$BUILD_NUMBER"'
+            }
+        }
+        stage('Push to ECR') {
+            steps {
+                sh 'docker push "$IMAGE_REPO:$BUILD_NUMBER"'
+                sh 'docker push "$IMAGE_REPO:latest"'
             }
         }
     } 
