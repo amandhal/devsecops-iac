@@ -1,10 +1,10 @@
-# AWS EC2 SSH private keys
+# SSH private keys
 *.pem
 **/*.pem
 
-# AWS Keys
+# Credentials
 vault.pass
-aws-creds.yml
+*creds.yml
 
 # Local .terraform directories
 .terraform/
