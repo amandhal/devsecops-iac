@@ -54,6 +54,6 @@ public class App {
 
     // simple helper method for tests
     public static String brandHtml() {
-        return "<h1>Aman's DevSecOps Project</h1><p>Created using Ansible, Terraform, K8s, Jenkins</p>";
+        return "<h1>Amanz DevSecOps Project</h1><p>Created using Ansible, Terraform, K8s, Jenkins</p>";
     }
 }
