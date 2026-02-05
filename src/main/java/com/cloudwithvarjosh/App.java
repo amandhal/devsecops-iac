@@ -54,6 +54,6 @@ public class App {
 
     // simple helper method for tests
     public static String brandHtml() {
-        return "<h1>Cloud With VarJosh</h1><p>Simple DevSecOps Demo App</p>";
+        return "<h1>Amanz DecSecOps Project</h1><p>Simple App deployed using cicd</p>";
     }
 }
