@@ -39,6 +39,17 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
 
+  node_security_group_additional_rules = {
+    nodeport = {  
+      protocol         = "tcp"  
+      from_port        = 31000  
+      to_port          = 31000  
+      type             = "ingress"  
+      cidr_blocks      = ["0.0.0.0/0"] 
+      description      = "Allow TCP 31000 to EKS nodes"  
+    }
+  }
+
   # Pod Identity (no OIDC/IRSA)
   enable_irsa = false
 
