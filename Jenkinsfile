@@ -51,7 +51,7 @@ pipeline {
         }
         stage('Update Deployment') {
             steps {
-                sh 'sed -i "s|image:.*|image: $IMAGE_REPO:$BUILD_NUMBER|g" deploy-svc.yaml'
+                sh 'sed -i "s|image:.*|image: $IMAGE_REPO:$BUILD_NUMBER|g" deploy-svc.yml'
             }
         }
         stage('Deploy to Kubernetes') {
