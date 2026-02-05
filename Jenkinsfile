@@ -49,5 +49,27 @@ pipeline {
                 sh 'docker push "$IMAGE_REPO:latest"'
             }
         }
+        stage('Update Deployment') {
+            steps {
+                sh 'sed -i "s|image:.*|image: $IMAGE_REPO:$BUILD_NUMBER|g" deploy-svc.yaml'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh '''#!/bin/bash -l
+                aws eks update-kubeconfig --region ap-south-1 --name aman-devsecops-eks
+                kubectl create ns aman-devsecops-project
+                kubectl apply -f deploy-svc.yaml
+                kubectl rollout status -n aman-devsecops-project deployment/aman-devsecops-deploy --timeout=60s || {
+                    kubectl rollout undo -n aman-devsecops-project deployment/aman-devsecops-deploy || true
+                    exit 1
+                }'''
+            }
+        }
+    }
+    post {
+        success { echo "Build ${env.BUILD_NUMBER} succeeded" }
+        failure { echo "Build ${env.BUILD_NUMBER} failed" }
+        always  { echo "Build ${env.BUILD_NUMBER} finished" }        
     } 
 }
