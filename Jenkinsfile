@@ -59,7 +59,7 @@ pipeline {
                 sh '''#!/bin/bash -l
                 aws eks update-kubeconfig --region ap-south-1 --name aman-devsecops-eks
                 kubectl create ns aman-devsecops-project
-                kubectl apply -f deploy-svc.yaml
+                kubectl apply -f deploy-svc.yml
                 kubectl rollout status -n aman-devsecops-project deployment/aman-devsecops-deploy --timeout=60s || {
                     kubectl rollout undo -n aman-devsecops-project deployment/aman-devsecops-deploy || true
                     exit 1
