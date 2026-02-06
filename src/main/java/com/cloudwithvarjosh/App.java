@@ -54,6 +54,6 @@ public class App {
 
     // simple helper method for tests
     public static String brandHtml() {
-        return "<h1>Amanz DecSecOps Project</h1><p>Simple Application deployed using CICD</p>";
+        return "<h1>Amanz DecSecOps Project</h1><p>Simple Application deployed using CICD approach</p>";
     }
 }
