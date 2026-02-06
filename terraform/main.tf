@@ -28,7 +28,7 @@ module "eks" {
   version = "~> 20.0"
 
   cluster_name    = "aman-devsecops-eks"
-  cluster_version = "1.32"
+  cluster_version = "1.35"
 
   cluster_endpoint_public_access       = true
   cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]  # Secure later
@@ -54,9 +54,9 @@ module "eks" {
   enable_irsa = false
 
   eks_managed_node_groups = {
-    public = {
-      name           = "aman-ng-public"
-      instance_types = ["t3.small"]
+    public-ng = {
+      name           = "devsecops-ng-public"
+      instance_types = ["c7i-flex.large"]
       min_size       = 1
       max_size       = 3
       desired_size   = 2
@@ -83,8 +83,8 @@ module "eks" {
       }
 
       tags = {
-        "node-type"  = "public-worker-node"
-        "managed-by" = "terraform"
+        node-type  = "public-worker-node"
+        managed-by = "terraform"
         owner        = "aman"
         project      = "aman-devsecops-project"
       }
@@ -101,5 +101,5 @@ module "eks" {
 resource "aws_eks_access_entry" "my_admin" {
   cluster_name      = module.eks.cluster_name
   principal_arn     = "arn:aws:iam::185137893823:role/jenkins-agent-role"
-  kubernetes_groups = ["my-admin"]
+  kubernetes_groups = ["jenkins-agent"]
 }
