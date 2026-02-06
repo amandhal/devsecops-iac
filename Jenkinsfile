@@ -16,7 +16,7 @@ pipeline {
         stage('Build & Sonar') {
             environment { SONAR_IP = '172.31.32.179' }
             steps {
-                withCredentials([string(credentialsId: 'jenkins-sonar-token', variable: 'SONAR_TOKEN ')]) {
+                withCredentials([string(credentialsId: 'jenkins-sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh 'mvn clean verify sonar:sonar \
                     -Dsonar.projectKey=aman-devsecops-project \
                     -Dsonar.host.url="http://${SONAR_IP}:9000" \
