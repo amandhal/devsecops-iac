@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'devsecops-agent' }
+    agent { label 'devsecops-jenkins-agent' }
     tools {
         maven 'maven3'
     }
