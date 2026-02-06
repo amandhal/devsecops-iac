@@ -5,7 +5,7 @@ pipeline {
     }
     environment {
         ECR_REGISTRY = '185137893823.dkr.ecr.ap-south-1.amazonaws.com'
-        IMAGE_REPO = "${ECR_REGISTRY}/devsecops-project-ecr"
+        IMAGE_REPO = "${ECR_REGISTRY}/aman-devsecops-project"
     }
     stages {
         stage('Trivy FS Scan') {
@@ -16,7 +16,7 @@ pipeline {
         stage('Build & Sonar') {
             environment { SONAR_IP = '172.31.45.194' }
             steps {
-                withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                withCredentials([string(credentialsId: 'jenkins-sonar-token', variable: 'SONAR_TOKEN ')]) {
                     sh 'mvn clean verify sonar:sonar \
                     -Dsonar.projectKey=DevSecOps-Project \
                     -Dsonar.host.url="http://${SONAR_IP}:9000" \
