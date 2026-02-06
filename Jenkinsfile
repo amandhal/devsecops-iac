@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'docker-maven-trivy' }
+    agent { label 'devsecops-agent' }
     tools {
         maven 'maven3'
     }
