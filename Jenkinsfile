@@ -14,7 +14,7 @@ pipeline {
             }
         }
         stage('Build & Sonar') {
-            environment { SONAR_IP = '172.31.45.194' }
+            environment { SONAR_IP = '172.31.32.179' }
             steps {
                 withCredentials([string(credentialsId: 'jenkins-sonar-token', variable: 'SONAR_TOKEN ')]) {
                     sh 'mvn clean verify sonar:sonar \
