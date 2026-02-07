@@ -1,0 +1,94 @@
+---
+- name: Set hostname to jenkins-agent
+  hostname:
+    name: jenkins-agent
+
+- name: Set linux system timezone to Asia/Kolkata
+  timezone:
+    name: Asia/Kolkata
+
+- name: Install JDK
+  apt:
+    name: openjdk-25-jdk
+    state: present
+    update_cache: yes
+
+- name: Create jenkins user for jenkins agent ec2
+  become: yes
+  ansible.builtin.user:
+    name: jenkins
+    shell: /bin/bash
+    createhome: yes
+    state: present
+
+- name: Add public key to jenkins agent at jenkins user
+  ansible.builtin.lineinfile:
+    path: /home/jenkins/.ssh/authorized_keys
+    create: yes
+    line: "{{ hostvars['localhost']['jenkins_agent_ssh_public_key'] }}"
+    owner: jenkins
+    group: jenkins
+    mode: '0600'
+  become: yes
+
+
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - wget
+      - curl
+      - unzip
+      - ca-certificates
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: Install Trivy package
+  ansible.builtin.apt:
+    deb: https://github.com/aquasecurity/trivy/releases/download/v0.69.0/trivy_0.69.0_Linux-64bit.deb
+
+- name: Download and unarchive the aws cli installation file
+  ansible.builtin.unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: /tmp/
+    remote_src: yes
+
+- name: Install AWS CLI 
+  ansible.builtin.command: /tmp/aws/install --update
+  become: yes
+
+- name: Install Docker from script
+  ansible.builtin.script: docker-install.sh
+  become: yes
+  args:
+    creates:
+      - /etc/apt/keyrings/docker.asc
+      - /etc/apt/sources.list.d/docker.sources
+      - /usr/bin/docker
+  changed_when: false
+  
+- name: Add Jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+
+- name: Download kubectl v1.35.0
+  ansible.builtin.get_url:
+    url: https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubectl
+    dest: /tmp/kubectl
+    mode: '0755'
+  become: yes
+
+- name: Install kubectl 
+  ansible.builtin.copy:
+    src: /tmp/kubectl
+    dest: /usr/local/bin/kubectl
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+  become: yes
+
+
+

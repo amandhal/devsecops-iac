@@ -1,0 +1,80 @@
+---
+- name: Set hostname to jenkins-controller
+  hostname:
+    name: jenkins-controller
+
+- name: Set linux system timezone to Asia/Kolkata
+  timezone:
+    name: Asia/Kolkata
+
+- name: Install JDK
+  apt:
+    name: openjdk-25-jdk
+    state: present
+    update_cache: yes
+
+- name: Download Jenkins GPG key
+  ansible.builtin.get_url:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+    dest: /etc/apt/keyrings/jenkins-keyring.asc
+    mode: '0644'
+
+- name: Add Jenkins APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+    state: present
+    filename: jenkins
+
+- name: Install Jenkins
+  ansible.builtin.apt:
+    name: jenkins
+    state: present
+    update_cache: yes
+
+- name: Create Jenkins systemd drop-in directory
+  file:
+    path: /etc/systemd/system/jenkins.service.d
+    state: directory
+
+- name: Set JVM timezone to Asia/Kolkata
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/jenkins.service.d/override.conf
+    content: |
+      [Service]
+      Environment="JAVA_OPTS=-Duser.timezone=Asia/Kolkata"
+
+- name: Reload systemd daemon & Ensure Jenkins is enabled and started
+  ansible.builtin.service:
+    name: jenkins
+    daemon_reload: yes
+    state: started
+    enabled: yes
+
+- name: Ensure Jenkins SSH dir
+  ansible.builtin.file:
+    path: /var/lib/jenkins/.ssh
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0700'
+  become: yes
+
+- name: Generate ed25519 key on controller
+  community.crypto.openssh_keypair:
+    path: /var/lib/jenkins/.ssh/jenkins-agent-key
+    type: ed25519
+    comment: jenkins-agent-access
+    state: present
+    force: no
+    owner: jenkins
+    group: jenkins
+    mode: '0600'
+  become: yes
+  register: jenkins_agent_ssh
+
+- name: Set fact for agent access (global)
+  ansible.builtin.set_fact:
+    jenkins_agent_ssh_public_key: "{{ jenkins_agent_ssh.public_key }}"
+  delegate_to: localhost
+  delegate_facts: true
+  run_once: true

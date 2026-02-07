@@ -1,0 +1,9 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - ap-south-1
+groups:
+    jenkins_controller: tags.Name == "jenkins-controller"
+    jenkins_agent: tags.Name == "jenkins-agent"
+    sonarqube: tags.Name == "sonarqube"
+filters:
+  instance-state-name: running

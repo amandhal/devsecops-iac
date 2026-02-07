@@ -1,0 +1,167 @@
+---
+- name: Set hostname to sonarqube
+  hostname:
+    name: sonarqube
+
+- name: Set linux system timezone to Asia/Kolkata
+  timezone:
+    name: Asia/Kolkata
+
+- name: Install JDK
+  apt:
+    name: openjdk-25-jdk
+    state: present
+    update_cache: yes
+
+- name: Install PostgreSQL and common extensions
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+    state: present
+    update_cache: yes
+
+- name: Enable and start PostgreSQL service
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Install PostgreSQL prerequisites for Ansible
+  ansible.builtin.package:
+    name:
+      - acl
+      - python3-psycopg2
+      - libpq-dev
+      - postgresql-client
+    state: present
+  become: true
+
+- name: Ensure SonarQube PostgreSQL user exists
+  community.postgresql.postgresql_user:
+    name: "{{ sonarqube_db_user }}"
+    password: "{{ sonarqube_db_password }}"
+    role_attr_flags: LOGIN
+    state: present
+  become: true
+  become_user: postgres
+
+- name: Create SonarQube database
+  community.postgresql.postgresql_db:
+    name: sonarqube
+    owner: sonar
+    state: present
+  become: true
+  become_user: postgres
+
+- name: Grant all privileges on sonarqube database to sonar
+  community.postgresql.postgresql_privs:
+    db: sonarqube
+    type: database
+    role: sonar
+    privs: ALL
+    state: present
+  become: true
+  become_user: postgres
+
+- name: Set vm.max_map_count for SonarQube/Elasticsearch
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: '524288'
+    state: present
+    sysctl_file: /etc/sysctl.d/99-sonarqube.conf
+    reload: true
+  become: true
+
+- name: Set fs.file-max for SonarQube/Elasticsearch
+  ansible.posix.sysctl:
+    name: fs.file-max
+    value: '131072'
+    state: present
+    sysctl_file: /etc/sysctl.d/99-sonarqube.conf
+    reload: true
+  become: true
+
+- name: Set sonar nofile ulimit
+  community.general.pam_limits:
+    domain: sonar
+    limit_item: nofile
+    limit_type: '-'
+    value: 131072
+  become: true
+
+- name: Set sonar nproc ulimit
+  community.general.pam_limits:
+    domain: sonar
+    limit_item: nproc
+    limit_type: '-'
+    value: 8192
+  become: true
+
+- name: Create sonar user with custom home directory
+  ansible.builtin.user:
+    name: sonar
+    home: /opt/sonarqube
+    shell: /bin/bash
+    create_home: true
+    state: present
+  become: true
+
+- name: Install unzip package
+  ansible.builtin.apt:
+    name: unzip
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Download SonarQube zip archive
+  ansible.builtin.get_url:
+    url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-26.1.0.118079.zip
+    dest: /tmp/sonarqube.zip
+    mode: '0644'
+  become: true
+
+- name: Extract SonarQube with correct ownership
+  ansible.builtin.unarchive:
+    src: /tmp/sonarqube.zip
+    dest: /opt/
+    remote_src: true
+    owner: sonar
+    group: sonar
+  become: true
+
+- name: Move extracted SonarQube to deployment location
+  ansible.builtin.file:
+    src: /opt/sonarqube-26.1.0.118079
+    dest: /opt/sonarqube-current
+    state: link
+    force: true
+  become: true
+
+- name: Configure SonarQube PostgreSQL JDBC settings
+  ansible.builtin.lineinfile:
+    path: /opt/sonarqube-current/conf/sonar.properties
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "sonar.jdbc.username={{ sonarqube_db_user }}"
+    - "sonar.jdbc.password={{ sonarqube_db_password }}"
+    - "sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube"
+  become: true
+  become_user: sonar
+  no_log: true  
+
+- name: Deploy SonarQube systemd unit file
+  ansible.builtin.template:
+    src: sonarqube.service.j2
+    dest: /etc/systemd/system/sonarqube.service
+    mode: '0644'
+  become: true
+
+- name: Ensure SonarQube service is enabled and started
+  ansible.builtin.systemd:
+    name: sonarqube
+    enabled: true
+    state: started
+    daemon_reload: true  
+  become: true

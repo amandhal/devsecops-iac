@@ -1,0 +1,128 @@
+---
+- name: Jenkins Controller Security Group
+  amazon.aws.ec2_security_group:
+    name: jenkins-controller-sg
+    description: allowing ssh and jenkins ui access
+    vpc_id: vpc-0bab8141a92cfaa9c
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    rules:
+      - proto: tcp
+        ports:
+          - 22
+          - 8080
+        cidr_ip: 0.0.0.0/0
+
+- name: EC2 for Jenkins Controller with EBS
+  amazon.aws.ec2_instance:
+    name: "jenkins-controller"
+    vpc_subnet_id: subnet-0d3348e011d905719
+    instance_type: c7i-flex.large
+    key_name: "DevSecOps-Project-Key"
+    security_group: jenkins-controller-sg 
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: ami-019715e0d74f695be 
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 24
+          delete_on_termination: true
+
+- name: Jenkins Agent Security Group
+  amazon.aws.ec2_security_group:
+    name: jenkins-agent-sg
+    description: allowing ssh access to jenkins agent
+    vpc_id: vpc-0bab8141a92cfaa9c
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    rules:
+      - proto: tcp
+        ports:
+          - 22
+        cidr_ip: 0.0.0.0/0
+
+- name: Create Jenkins agent IAM role
+  amazon.aws.iam_role:
+    name: jenkins-agent-role
+    assume_role_policy_document: "{{ lookup('file','trust-relationship-policy.json') }}"
+    managed_policies:
+      - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+
+- name: adding policy to allowing jenkins agent to eks:describecluster
+  amazon.aws.iam_policy:
+    iam_type: role
+    iam_name: jenkins-agent-role
+    policy_name: "kubeconfig-update-policy"
+    policy_json: "{{ lookup('template', 'kubeconfig_update.json.j2') }}"
+    state: present
+
+- name: Create Instance Profile for jenkins-agent ec2
+  amazon.aws.iam_instance_profile:
+    name: "jenkins-agent-instance-profile"
+    role: "jenkins-agent-role"
+
+- name: EC2 for Jenkins Agent with EBS
+  amazon.aws.ec2_instance:
+    name: "jenkins-agent"
+    vpc_subnet_id: subnet-0d3348e011d905719
+    instance_type: c7i-flex.large
+    key_name: "DevSecOps-Project-Key"
+    security_group: jenkins-agent-sg 
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: ami-019715e0d74f695be
+    iam_instance_profile: jenkins-agent-instance-profile
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 36
+          delete_on_termination: true
+
+- name: SonarQube Security Group
+  amazon.aws.ec2_security_group:
+    name: sonarqube-sg
+    description: allowing ssh and sonarqube ui access
+    vpc_id: vpc-0bab8141a92cfaa9c
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    rules:
+      - proto: tcp
+        ports:
+          - 22
+          - 9000
+        cidr_ip: 0.0.0.0/0
+
+- name: EC2 for SonarQube with EBS
+  amazon.aws.ec2_instance:
+    name: "sonarqube"
+    vpc_subnet_id: subnet-0d3348e011d905719
+    instance_type: c7i-flex.large
+    key_name: "DevSecOps-Project-Key"
+    security_group: sonarqube-sg 
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: ami-019715e0d74f695be
+    aws_region: ap-south-1
+    aws_access_key_id: "{{ aws_access_key_id }}"
+    aws_secret_access_key: "{{ aws_secret_access_key }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 24
+          delete_on_termination: true
+
+- name: create ecr-repo
+  community.aws.ecs_ecr:
+    name: aman-devsecops-project
+    image_tag_mutability: mutable
+

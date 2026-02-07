@@ -1,0 +1,40 @@
+---
+- name: Deploy EC2 for Jenkins Server
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  roles:
+    - create-ec2-instances
+
+- name: Pausing for few seconds
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: waiting for 30 seconds to boot up EC2 instances
+      ansible.builtin.pause:
+        seconds: 30
+
+- name: Refresh inventory for new EC2
+  hosts: localhost
+  tasks:
+    - name: Refresh inventory to ensure new instances exist in inventory
+      ansible.builtin.meta: refresh_inventory
+
+- name: Configure Jenkins Controller on EC2
+  hosts: jenkins_controller 
+  become: yes
+  roles:
+    - configure-ec2-jenkins-controller
+
+- name: Configure Jenkins Agent on EC2
+  hosts: jenkins_agent 
+  become: yes
+  roles:
+    - configure-ec2-jenkins-agent
+
+- name: Configure SonarQube on EC2
+  hosts: sonarqube
+  become: yes
+  roles:
+    - configure-ec2-sonarqube
