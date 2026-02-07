@@ -1,3 +1,11 @@
+# SSH private keys
+*.pem
+**/*.pem
+
+# Credentials
+vault.pass
+*creds.yml
+
 # Local .terraform directories
 .terraform/
 
