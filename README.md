@@ -7,8 +7,8 @@ CI/CD deployment on AWS and Kubernetes.
 It is divided into two main parts:
 
 -   **Infrastructure as Code (IaC)** -- Provisioning and configuring
-    cloud and compute resources
--   **CI/CD Pipeline** -- Building, scanning, containerizing, and
+    cloud resources.
+-   **CI/CD Pipeline** -- Building, testing, scanning, containerizing, and
     deploying an application
 
 ------------------------------------------------------------------------
@@ -34,6 +34,7 @@ Kubernetes cluster.
 
 Ansible is used for post-provisioning configuration of EC2 instances and
 IAM setup.
+Used Ansible Vault to encrypts and use AWS credentials securely.
 
 #### EC2 Instances Created & Configured
 
